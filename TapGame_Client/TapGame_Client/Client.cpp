@@ -6,15 +6,15 @@ Client::Client(boost::asio::io_context& io) try :
 	_socket(io, _ssl_context),
 	_strand(boost::asio::make_strand(io))
 {
-	//ÀÎÁõ¼­ °ËÁõ ¹æ½Ä (½ÇÁ¦ ÀÎÁõ¼­¸¦ ¹ß±Ş¹ŞÀ¸¸é verify_peer·Î º¯°æ)
+	//ì¸ì¦ì„œ ê²€ì¦ ë°©ì‹ (ì‹¤ì œ ì¸ì¦ì„œë¥¼ ë°œê¸‰ë°›ìœ¼ë©´ verify_peerë¡œ ë³€ê²½)
 	_ssl_context.set_verify_mode(boost::asio::ssl::verify_none);
 
-	//¼ÒÄÏ »ı¼º ¹× ¿£µåÆ÷ÀÎÆ® ¼³Á¤
+	//ì†Œì¼“ ìƒì„± ë° ì—”ë“œí¬ì¸íŠ¸ ì„¤ì •
 	boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket(io, _ssl_context);
 	boost::asio::ip::tcp::resolver resolver(io);
 	_endpoints = resolver.resolve("127.0.0.1", "6799");
 
-	//ºñµ¿±â·Î Conenct
+	//ë¹„ë™ê¸°ë¡œ Conenct
 	Start_Connect();
 }
 catch (const std::exception& e)
@@ -30,7 +30,7 @@ void Client::Start_Connect()
 		_endpoints,
 		[this](const boost::system::error_code& error, const boost::asio::ip::tcp::endpoint& endppoint) 
 		{		
-			//Connect ¼º°ø ½Ã ºñµ¿±â·Î ÇÚµå½¦ÀÌÅ© ½ÃÀÛ
+			//Connect ì„±ê³µ ì‹œ ë¹„ë™ê¸°ë¡œ í•¸ë“œì‰ì´í¬ ì‹œì‘
 			if (!error)
 			{
 				Start_Handshake();
@@ -55,25 +55,26 @@ void Client::Start_Handshake()
 
 void Client::Start_Read()
 {
-	//1. ±ÛÀÚ ¼ö ÀĞ±â (4¹ÙÀÌÆ®)
+	//1. ê¸€ì ìˆ˜ ì½ê¸° (4ë°”ì´íŠ¸)
 	_socket.async_read_some(boost::asio::buffer(_buf),
 		[this](const boost::system::error_code& error, std::size_t len1)
 		{
 			if (!error)
 			{
-				//2. ±¸ÇÑ Å©±â¸¦ Á¤¼ö·Î ÆÄ½Ì
+				//2. êµ¬í•œ í¬ê¸°ë¥¼ ì •ìˆ˜ë¡œ íŒŒì‹±
 				int size = std::stoi(_buf.data());
-				//3. ½ÇÁ¦ µ¥ÀÌÅÍ°¡ ÀúÀåµÇ´Â ¹öÆÛ
+				//3. ì‹¤ì œ ë°ì´í„°ê°€ ì €ì¥ë˜ëŠ” ë²„í¼
 				auto dataBuf = std::make_shared<std::vector<char>>(size);
 
-				//4. ±ÛÀÚ ¼ö¸¦ Åä´ë·Î µ¥ÀÌÅÍ ÀĞ±â
+				//4. ê¸€ì ìˆ˜ë¥¼ í† ëŒ€ë¡œ ë°ì´í„° ì½ê¸°
 				_socket.async_read_some(boost::asio::buffer(*dataBuf),
 					[this, dataBuf](const boost::system::error_code& ec, std::size_t len2)
 					{
 						if (!ec)
 						{
 							Start_Read();
-							Start_Dispatch(dataBuf->data());
+							std::string str(dataBuf->data(), dataBuf->size());
+							Start_Dispatch(str);
 						}
 					});
 			}
@@ -83,10 +84,10 @@ void Client::Start_Read()
 
 void Client::Start_Write(std::string str)
 {
-	//ºñµ¿±â ÀÛ¾÷ÀÌ ¿Ï·áµÉ ¶§±îÁö ¹öÆÛ°¡ »ì¾ÆÀÖ¾î¾ßÇÏ¹Ç·Î ½º¸¶Æ® Æ÷ÀÎÅÍ·Î ÃÊ±âÈ­
+	//ë¹„ë™ê¸° ì‘ì—…ì´ ì™„ë£Œë  ë•Œê¹Œì§€ ë²„í¼ê°€ ì‚´ì•„ìˆì–´ì•¼í•˜ë¯€ë¡œ ìŠ¤ë§ˆíŠ¸ í¬ì¸í„°ë¡œ ì´ˆê¸°í™”
 	auto buffer = std::make_shared<std::string>(str);
 
-	//strand·Î ¹­¾î¼­ Áßº¹ ½ÇÇà ¹æÁö
+	//strandë¡œ ë¬¶ì–´ì„œ ì¤‘ë³µ ì‹¤í–‰ ë°©ì§€
 	_socket.async_write_some(boost::asio::buffer(*buffer),
 		boost::asio::bind_executor(_strand,
 		[this, buffer](const boost::system::error_code& error, std::size_t len)
@@ -95,7 +96,7 @@ void Client::Start_Write(std::string str)
 				{
 					/*
 					
-					Write ¿Ï·á
+					Write ì™„ë£Œ
 					
 					*/
 				}
@@ -110,11 +111,10 @@ void Client::Start_Dispatch(std::string str)
 
 	if (j["type"] == "Login_Success")
 	{
-		std::cout << "";
+		//UI
 	}
 	else if (j["type"] == "Login_Failed")
 	{
-
-		std::cout << "";
+		//UI		
 	}
 }
