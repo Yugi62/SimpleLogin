@@ -18,13 +18,13 @@ void Session::Start()
 
 void Session::Start_Handshake()
 {
-	//¼¼¼Ç À¯Áö¿ë Æ÷ÀÎÅÍ
+	//ì„¸ì…˜ ìœ ì§€ìš© í¬ì¸í„°
 	auto shared(shared_from_this());
 
 	_socket.async_handshake(boost::asio::ssl::stream_base::server,
 		[this, shared](const boost::system::error_code& error)
 		{
-			//ÇÚµå½¦ÀÌÅ© ¼º°ø ½Ã
+			//í•¸ë“œì‰ì´í¬ ì„±ê³µ ì‹œ
 			if (!error)
 			{
 				Start_Read();
@@ -35,21 +35,21 @@ void Session::Start_Handshake()
 
 void Session::Start_Read()
 {
-	//¼¼¼Ç À¯Áö¿ë Æ÷ÀÎÅÍ
+	//ì„¸ì…˜ ìœ ì§€ìš© í¬ì¸í„°
 	auto shared(shared_from_this());
 
-	//1. ±ÛÀÚ ¼ö ÀĞ±â (4¹ÙÀÌÆ®)
+	//1. ê¸€ì ìˆ˜ ì½ê¸° (4ë°”ì´íŠ¸)
 	_socket.async_read_some(boost::asio::buffer(_buf),
 		[this, shared](const boost::system::error_code& error, std::size_t len1)
 		{
 			if (!error)
 			{
-				//2. ±¸ÇÑ Å©±â¸¦ Á¤¼ö·Î ÆÄ½Ì
+				//2. êµ¬í•œ í¬ê¸°ë¥¼ ì •ìˆ˜ë¡œ íŒŒì‹±
 				int size = std::stoi(_buf.data());
-				//3. ½ÇÁ¦ µ¥ÀÌÅÍ°¡ ÀúÀåµÇ´Â ¹öÆÛ
+				//3. ì‹¤ì œ ë°ì´í„°ê°€ ì €ì¥ë˜ëŠ” ë²„í¼
 				auto dataBuf = std::make_shared<std::vector<char>>(size);
 
-				//4. ±ÛÀÚ ¼ö¸¦ Åä´ë·Î µ¥ÀÌÅÍ ÀĞ±â
+				//4. ê¸€ì ìˆ˜ë¥¼ í† ëŒ€ë¡œ ë°ì´í„° ì½ê¸°
 				_socket.async_read_some(boost::asio::buffer(*dataBuf),
 					[this, shared, dataBuf](const boost::system::error_code& ec, std::size_t len2)
 					{
@@ -66,13 +66,13 @@ void Session::Start_Read()
 
 void Session::Start_Write(std::string str)
 {
-	//¼¼¼Ç À¯Áö¿ë Æ÷ÀÎÅÍ
+	//ì„¸ì…˜ ìœ ì§€ìš© í¬ì¸í„°
 	auto shared(shared_from_this());
 
-	//ºñµ¿±â ÀÛ¾÷ÀÌ ¿Ï·áµÉ ¶§±îÁö ¹öÆÛ°¡ »ì¾ÆÀÖ¾î¾ßÇÏ¹Ç·Î ½º¸¶Æ® Æ÷ÀÎÅÍ·Î ÃÊ±âÈ­
+	//ë¹„ë™ê¸° ì‘ì—…ì´ ì™„ë£Œë  ë•Œê¹Œì§€ ë²„í¼ê°€ ì‚´ì•„ìˆì–´ì•¼í•˜ë¯€ë¡œ ìŠ¤ë§ˆíŠ¸ í¬ì¸í„°ë¡œ ì´ˆê¸°í™”
 	auto buffer = std::make_shared<std::string>(str);
 
-	//strand·Î ¹­¾î¼­ Áßº¹ ½ÇÇà ¹æÁö
+	//strandë¡œ ë¬¶ì–´ì„œ ì¤‘ë³µ ì‹¤í–‰ ë°©ì§€
 	_socket.async_write_some(boost::asio::buffer(*buffer),
 		boost::asio::bind_executor(_strand,
 			[this, buffer](const boost::system::error_code& error, std::size_t len)
@@ -81,7 +81,7 @@ void Session::Start_Write(std::string str)
 				{
 					/*
 
-					Write ¿Ï·á
+					Write ì™„ë£Œ
 
 					*/
 				}
@@ -95,22 +95,22 @@ Server::Server(boost::asio::io_context& io, unsigned short port) :
 	_strand(boost::asio::make_strand(io))
 {
 	context_.set_options(
-		boost::asio::ssl::context::default_workarounds |				//¿ìÈ¸ ÀÛ¾÷ Çã¿ë
-		boost::asio::ssl::context::single_dh_use |						//DH ÆÄ¶ó¹ÌÅÍ °­Á¦ »õ·Î°íÄ§
-		boost::asio::ssl::context::no_sslv2 |							//sslv2 ±İÁö
-		boost::asio::ssl::context::no_sslv3 |							//sslv3	±İÁö
-		boost::asio::ssl::context::no_tlsv1 |							//tlsv1.0 ±İÁö
-		boost::asio::ssl::context::no_tlsv1_1							//tlsv1.1 ±İÁö
+		boost::asio::ssl::context::default_workarounds |					//ìš°íšŒ ì‘ì—… í—ˆìš©
+		boost::asio::ssl::context::single_dh_use |						//DH íŒŒë¼ë¯¸í„° ê°•ì œ ìƒˆë¡œê³ ì¹¨
+		boost::asio::ssl::context::no_sslv2 |							//sslv2 ê¸ˆì§€
+		boost::asio::ssl::context::no_sslv3 |							//sslv3	ê¸ˆì§€
+		boost::asio::ssl::context::no_tlsv1 |							//tlsv1.0 ê¸ˆì§€
+		boost::asio::ssl::context::no_tlsv1_1							//tlsv1.1 ê¸ˆì§€
 	);
 
-	//ÇÚµå½¦ÀÌÅ©¸¦ À§ÇØ ÀÎÁõ¼­¿Í Å°¸¦ ·Îµå
+	//í•¸ë“œì‰ì´í¬ë¥¼ ìœ„í•´ ì¸ì¦ì„œì™€ í‚¤ë¥¼ ë¡œë“œ
 	context_.use_certificate_file("Server.crt", boost::asio::ssl::context::pem);
 	context_.use_private_key_file("Server.key", boost::asio::ssl::context::pem);
 
-	//dh Å°±³È¯ ¹æ½ÄÀ¸·Î º¯°æ
+	//dh í‚¤êµí™˜ ë°©ì‹ìœ¼ë¡œ ë³€ê²½
 	context_.use_tmp_dh_file("dh2048.pem");
 
-	//ºñµ¿±â·Î Accept ½ÃÀÛ
+	//ë¹„ë™ê¸°ë¡œ Accept ì‹œì‘
 	Start_Accept();
 }
 
@@ -136,7 +136,7 @@ void Session::Start_Dispatch(std::string str)
 	{
 		nlohmann::json newJ;
 
-		//ºñ¹Ğ¹øÈ£ ´ëÁ¶
+		//ë¹„ë°€ë²ˆí˜¸ ëŒ€ì¡°
 		if (Utility::verifyPassword(j["password"], Database::GetInstance().GetPassword(j["id"])))
 			newJ["type"] = "Login_Success";
 		else		
