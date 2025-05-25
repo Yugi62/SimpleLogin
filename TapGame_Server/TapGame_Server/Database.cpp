@@ -19,7 +19,7 @@ void Database::Init()
 
 std::string Database::GetPassword(std::string user_id)
 {
-	//ÆÄ¶ó¹ÌÅÍ ¹ÙÀÎµù (sql injection ¹æÁö)
+	//íŒŒë¼ë¯¸í„° ë°”ì¸ë”© (sql injection ë°©ì§€)
 	sql::PreparedStatement* ps = con->prepareStatement("select user_password from users where user_id = ?");
 	ps->setString(1, user_id);
 	auto result = ps->executeQuery();
