@@ -32,7 +32,7 @@ private:
 	boost::asio::ssl::context context_;
 	boost::asio::strand<boost::asio::io_context::executor_type> _strand;
 
-	//ºñµ¿±â·Î Accpet ½ÃÀÛ
+	//ë¹„ë™ê¸°ë¡œ Accpet ì‹œì‘
 	void Start_Accept();
 
 public:
